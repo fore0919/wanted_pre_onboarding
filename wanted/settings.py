@@ -31,8 +31,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
-    'users'
-    'product'
+    'users',
+    'product',
+    'core',
 ]
 
 MIDDLEWARE = [
