@@ -153,10 +153,10 @@ class ProductListView(View):
 
         return JsonResponse({'result':result}, status=200)
         
-    
+
+
+
         
-
-
 class FundingView(View):
     @signin_decorator
     def post(self,request,product_id):
