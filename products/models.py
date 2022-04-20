@@ -15,7 +15,7 @@ class Product(TimeStamp):
 
 
 class Detail(models.Model):
-    product_id = models.OneToOneField('Product', on_delete=models.CASCADE)
+    product = models.OneToOneField('Product', on_delete=models.CASCADE)
     total_sponsor = models.IntegerField() # 펀딩 참여자 수
     current_funding_amount = models.DecimalField(max_digits=10, decimal_places=2) # 현재 모금 금액 
     target_rate = models.DecimalField(max_digits=5, decimal_places=0) # 목표금액 달성률
@@ -25,8 +25,8 @@ class Detail(models.Model):
 
 
 class Funding(TimeStamp):
-    user_id = models.ForeignKey('users.User', on_delete=models.CASCADE)
-    product_id = models.ForeignKey('Product', on_delete=models.CASCADE)
+    user = models.ForeignKey('users.User', on_delete=models.CASCADE)
+    product = models.ForeignKey('Product', on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'fundings'

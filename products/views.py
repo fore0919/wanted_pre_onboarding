@@ -31,7 +31,7 @@ class ProductView(View):
             )
 
             Detail.objects.create(
-                product_id = pid,
+                product = pid,
                 total_sponsor = 0,
                 current_funding_amount  = 0,
                 target_rate = 0
@@ -138,11 +138,12 @@ class ProductListView(View):
             'high_price' : 'current_funding_amount'
         }
 
-        products = Product.objects.select_related('detail')\
-                                  .filter(q)\
+        products = Product.objects.filter(q)\
+                                  .select_related('detail', 'user')\
                                   .order_by(sort[sorting])[OFFSET:OFFSET+LIMIT]
+
         result = [{
-            'product_id' : product.id,
+            'product' : product.id,
             'title' : product.title,
             'user' : product.user.nickname,
             'total_sponsor' : f'{product.detail.total_sponsor}명',
@@ -154,9 +155,6 @@ class ProductListView(View):
         return JsonResponse({'result':result}, status=200)
         
 
-
-
-        
 class FundingView(View):
     @signin_decorator
     def post(self,request,product_id):
@@ -165,7 +163,7 @@ class FundingView(View):
             product = Product.objects.get(id=product_id)
             detail  = product.detail
             
-            product.funding_set.create(user_id=user, product_id=product)
+            product.funding_set.create(user=user, product=product)
             
             detail.total_sponsor += 1
             detail.current_funding_amount += product.funding_amount
