@@ -6,7 +6,6 @@ from django.views     import View
 from datetime         import datetime
 
 from core.utils      import signin_decorator
-from users.models    import User
 from products.models import Product, Detail
 
 
@@ -48,7 +47,7 @@ class ProductDetailView(View):
     def get(self, request, product_id):
         try:
             if not Product.objects.filter(id=product_id).exists():
-                return JsonResponse({'message':'PRODUCT_DOES_NOT_EXIST'}, status = 404)
+                return JsonResponse({'message':'PRODUCT_DOES_NOT_EXIST'}, status=404)
 
             product = Product.objects.select_related('detail').get(id=product_id)
             # detail = Detail.objects.get(id=product_id)
@@ -66,7 +65,7 @@ class ProductDetailView(View):
                 'd-day' : (f'{(product.end_date - datetime.now().date()).days}일 남았습니다')
             }
 
-            return JsonResponse({'result':result}, status = 200)
+            return JsonResponse({'result':result}, status=200)
 
         except KeyError:
             return JsonResponse({'message':'KEY_ERROR'}, status=400)    
@@ -95,10 +94,10 @@ class ProductDetailView(View):
             return JsonResponse({'message':'SUCCESS'}, status=200)
 
         except KeyError:
-            return JsonResponse({'message':'KEY_ERROR'}, status = 400)
+            return JsonResponse({'message':'KEY_ERROR'}, status=400)
 
         except Product.DoesNotExist:
-            return JsonResponse({'message':'PRODUCT_DOES_NOT_EXIST'}, status = 404)
+            return JsonResponse({'message':'PRODUCT_DOES_NOT_EXIST'}, status=404)
             
     @signin_decorator
     def delete(self, request, product_id):
@@ -110,14 +109,71 @@ class ProductDetailView(View):
                 return JsonResponse({'message':'DOES_NOT_EXISTS'}, status=404)
 
             if not product.user == user:
-                return JsonResponse({'MESSAGE':'INVALID_USER'}, status=403)
+                return JsonResponse({'message':'INVALID_USER'}, status=403)
             
             product.delete()
 
-            return JsonResponse({'message':'SUCCESS'}, status =204)
+            return JsonResponse({'message':'SUCCESS'}, status=204)
 
         except Product.DoesNotExist:
-            return JsonResponse({'message':'PRODUCT_DOES_NOT_EXIST'}, status = 404)
+            return JsonResponse({'message':'PRODUCT_DOES_NOT_EXIST'}, status=404)
 
-# class ProductListView(View):
-#     def get(self):
+
+class ProductListView(View):
+    def get(self, request):
+        sorting = request.GET.get('order_by','id')
+        search = request.GET.get('search')
+        OFFSET = int(request.GET.get('offset',0))
+        LIMIT  = int(request.GET.get('limit', 6))    
+
+        q = Q()
+        if search:
+            q &= Q(title__icontains = search)
+        
+        sort = {
+            'id':'id',
+            'latest_order' : 'create_at',
+            'past_order' : '-create_at',
+            'low_price' : '-detail__current_funding_amount',
+            'high_price' : 'current_funding_amount'
+        }
+
+        products = Product.objects.select_related('detail')\
+                                  .filter(q)\
+                                  .order_by(sort[sorting])[OFFSET:OFFSET+LIMIT]
+        result = [{
+            'product_id' : product.id,
+            'title' : product.title,
+            'user' : product.user.nickname,
+            'total_sponsor' : f'{product.detail.total_sponsor}명',
+            'current_funding_amount' : f'{int(product.detail.current_funding_amount)}원',
+            'target_rate' : f'{product.detail.target_rate}%',
+            'd-day' : f'{(product.end_date - datetime.now().date()).days}일 남았습니다',
+        }for product in products]
+
+        return JsonResponse({'result':result}, status=200)
+        
+    
+        
+
+
+class FundingView(View):
+    @signin_decorator
+    def post(self,request,product_id):
+        try:
+            user = request.user
+            product = Product.objects.get(id=product_id)
+            detail  = product.detail
+            
+            product.funding_set.create(user_id=user, product_id=product)
+            
+            detail.total_sponsor += 1
+            detail.current_funding_amount += product.funding_amount
+            detail.target_rate = ((product.funding_amount*detail.total_sponsor)
+                                /product.total_target_amount*100)
+            detail.save()
+
+            return JsonResponse({'message':'SUCCESS'}, status=201)
+
+        except Product.DoesNotExist:
+            return JsonResponse({'message':'PRODUCT_DOES_NOT_EXIST'}, status=404)
