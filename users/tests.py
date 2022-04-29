@@ -28,7 +28,7 @@ class SignupTest(TestCase):
         self.assertEqual(response.json(), {'message':'SUCCESS'})
         self.assertEqual(response.status_code,201)
     # 실패 - 유효하지 않은 이메일 형식
-    def test_SignupView_post_success(self):
+    def test_SignupView_post_email_validation(self):
         client = Client()
         user = {
             'email'     : 'fore0919',
@@ -39,7 +39,7 @@ class SignupTest(TestCase):
         self.assertEqual(response.json(), {'message':'EMAIL_VALIDATION_ERROR'})
         self.assertEqual(response.status_code,400)
     # 실패 - 유효하지 않은 비밀번호 형식
-    def test_SignupView_post_success(self):
+    def test_SignupView_post_pw_validation(self):
         client = Client()
         user = {
             'email'     : 'fore0919@velog.io',
@@ -50,7 +50,7 @@ class SignupTest(TestCase):
         self.assertEqual(response.json(), {'message':'PW_VALIDATION_ERROR'})
         self.assertEqual(response.status_code,400)    
     # 실패 - 이미 가입된 회원
-    def test_SignupView_post_success(self):
+    def test_SignupView_post_already_exists_email(self):
         client = Client()
         user = {
             'email'     : 'test@velog.io',
@@ -61,7 +61,7 @@ class SignupTest(TestCase):
         self.assertEqual(response.json(), {'message':'ALREADY_EXISTS_EMAIL'})
         self.assertEqual(response.status_code,409)    
     # 실패 - 이메일 or 비밀번호 미입력
-    def test_SignupView_post_success(self):
+    def test_SignupView_post_keyerror(self):
         client = Client()
         user = {
             'emai'     : 'fore0919@velog.io',
@@ -100,7 +100,7 @@ class LoginTest(TestCase):
                 'access_token':access_token
         })
     #실패 - 틀린 비밀번호 입력
-    def test_LoginView_post_success(self):
+    def test_LoginView_post_invalid_user(self):
         client = Client()
 
         user    = {
@@ -114,7 +114,7 @@ class LoginTest(TestCase):
         self.assertEqual(response.status_code, 401)
         self.assertEqual(response.json(), {'message':'INVALID_USER'})
     #실패 - 이메일 or 비밀번호 미입력
-    def test_LoginView_post_success(self):
+    def test_LoginView_post_keyerror(self):
         client = Client()
 
         user    = {
@@ -127,7 +127,7 @@ class LoginTest(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json(), {'message':'KEY_ERROR'})
     #실패 - 존재하지 않는 회원 
-    def test_LoginView_post_success(self):
+    def test_LoginView_post_user_not_exists(self):
         client = Client()
 
         user    = {

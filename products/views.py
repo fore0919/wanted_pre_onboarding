@@ -141,7 +141,7 @@ class ProductListView(View):
         products = Product.objects.filter(q)\
                                   .select_related('detail', 'user')\
                                   .order_by(sort[sorting])[OFFSET:OFFSET+LIMIT]
-
+        
         result = [{
             'product' : product.id,
             'title' : product.title,
@@ -154,7 +154,7 @@ class ProductListView(View):
 
         return JsonResponse({'result':result}, status=200)
         
-
+    
 class FundingView(View):
     @signin_decorator
     def post(self,request,product_id):
